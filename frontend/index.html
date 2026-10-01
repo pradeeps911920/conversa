@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #343541; color: #ececf1; }
+        .sidebar { background-color: #202123; }
+        .input-bg { background-color: #40414f; }
+        .message-agent { background-color: #444654; }
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #565869; border-radius: 4px; }
+    </style>
+</head>
+<body class="flex h-screen w-full overflow-hidden font-sans text-sm md:text-base">
+
+    <!-- Sidebar -->
+    <div class="sidebar w-64 flex-shrink-0 flex-col p-2 hidden md:flex border-r border-gray-700">
+        <button onclick="ui.showNewCase()" class="flex items-center gap-3 p-3 border border-gray-600 rounded-md hover:bg-gray-700 transition mb-4">
+            <i class="fa-solid fa-plus"></i> New Strategy Session
+        </button>
+        
+        <div class="text-xs text-gray-400 font-semibold mb-2 px-2">RECENT CASES</div>
+        <div id="history-list" class="flex-1 overflow-y-auto space-y-1">
+            <!-- Cases render here -->
+        </div>
+
+        <div id="active-case-info" class="hidden mt-auto px-2 flex-col gap-2 border-t border-gray-700 pt-4 pb-4">
+            <div class="text-xs text-emerald-400 font-semibold mb-1">ACTIVE OBJECTIVE</div>
+            <textarea id="active-objective" rows="4" class="w-full bg-[#40414f] border border-gray-600 rounded p-2 text-white outline-none focus:border-blue-500 text-sm resize-none" placeholder="Target objective..."></textarea>
+            <button onclick="api.updateObjective()" class="bg-gray-600 hover:bg-gray-500 text-xs px-2 py-2 rounded w-full transition font-semibold">Update Objective</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col h-full relative">
+        
+        <!-- Header (Mobile only) -->
+        <div class="md:hidden flex items-center justify-between p-4 border-b border-gray-700 bg-[#343541]">
+            <button onclick="ui.toggleSidebar()"><i class="fa-solid fa-bars text-xl"></i></button>
+            <span class="font-semibold">Conversa</span>
+            <button onclick="ui.showNewCase()"><i class="fa-solid fa-plus text-xl"></i></button>
+        </div>
+
+        <!-- VIEW 1: Initialization Form -->
+        <div id="setup-view" class="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center items-start pt-12">
+            <div class="w-full max-w-2xl bg-gray-800 border border-gray-700 p-6 md:p-8 rounded-xl shadow-2xl">
+                <h2 class="text-2xl font-bold mb-2 text-white">Initialize New Case</h2>
+                <p class="text-gray-400 mb-6 text-sm">Leave fields blank if they are irrelevant. The agent will ignore them.</p>
+                
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Target Name</label>
+                            <input type="text" id="setup-name" class="w-full bg-[#40414f] border border-gray-600 rounded p-2 text-white outline-none focus:border-blue-500" placeholder="e.g. Sarah">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Gender / Pronouns</label>
+                            <input type="text" id="setup-gender" class="w-full bg-[#40414f] border border-gray-600 rounded p-2 text-white outline-none focus:border-blue-500" placeholder="e.g. She/Her">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Background Context / Origin Story (Space to breathe)</label>
+                        <textarea id="setup-dynamic" rows="4" class="w-full bg-[#40414f] border border-gray-600 rounded p-2 text-white outline-none focus:border-blue-500 resize-none" placeholder="Tell the AI everything. How you met, previous arguments, personality traits..."></textarea>
+                    </div>
+
+                    <hr class="border-gray-600 my-4">
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Strategic Objective (Required)</label>
+                        <input type="text" id="setup-objective" class="w-full bg-[#40414f] border border-gray-600 rounded p-2 text-white outline-none focus:border-blue-500" placeholder="e.g. De-escalate and get them to agree to talk tomorrow">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Target's Last Message (Required)</label>
+                        <textarea id="setup-message" rows="3" class="w-full bg-[#40414f] border border-gray-600 rounded p-2 text-white outline-none focus:border-blue-500 resize-none" placeholder="Paste what they just said here..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Length Constraint</label>
+                        <input type="text" id="setup-length" class="w-full bg-[#40414f] border border-gray-600 rounded p-2 text-white outline-none focus:border-blue-500" placeholder="e.g. Keep it under 2 sentences">
+                    </div>
+
+                    <button onclick="api.startCase()" id="start-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded transition mt-4 flex justify-center items-center gap-2">
+                        <span>Begin Strategy Simulator</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: The Conversation Feed -->
+        <div id="chat-view" class="hidden flex-1 overflow-y-auto pb-48 pt-4">
+            <div id="chat-feed" class="w-full max-w-4xl mx-auto flex flex-col pb-8">
+                <!-- Feed dynamically populates here -->
+            </div>
+        </div>
+
+        <!-- Input Area (Only visible in Chat View) -->
+        <div id="input-area" class="hidden absolute bottom-0 w-full md:w-[calc(100%-16rem)] bg-gradient-to-t from-[#343541] via-[#343541] to-transparent pt-12 pb-6 px-4 md:px-8 flex justify-center">
+            <div class="w-full max-w-4xl bg-[#40414f] rounded-xl shadow-lg border border-gray-600 p-2 relative flex flex-col gap-2">
+                
+                <textarea id="turn-target-msg" rows="2" class="w-full bg-transparent p-2 text-white outline-none resize-none" placeholder="Paste their next response here..."></textarea>
+                
+                <div class="flex items-center gap-2 border-t border-gray-600 pt-2">
+                    <input type="text" id="turn-context" class="flex-1 bg-transparent p-2 text-sm text-gray-300 outline-none" placeholder="Add subtext/context (e.g. 'She is joking') (Optional)">
+                    <button onclick="api.analyzeTurn()" id="analyze-btn" class="bg-blue-600 hover:bg-blue-700 p-2 px-4 rounded text-white font-semibold flex items-center gap-2 transition disabled:opacity-50">
+                        <i class="fa-solid fa-bolt"></i> Generate
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loader" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+        <div class="bg-gray-800 p-6 rounded-xl flex flex-col items-center shadow-2xl">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
+            <span id="loader-text" class="text-gray-200 font-semibold">Analyzing strategy...</span>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
