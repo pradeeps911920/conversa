@@ -1,8 +1,10 @@
 # Conversa 🧠
 
-A persistent, stateful relationship-strategy agent and conversation planning simulator.
+### The AI strategist for conversations where you need to convince someone.
 
-Conversa acts as an intelligent conversation planner. It reasons over stored context, generates strategic messages, critiques its own outputs, and adapts its approach turn-by-turn.
+Conversa is a persistent, stateful AI agent for convincing, negotiating, and navigating conversations toward a desired outcome.
+
+It doesn't just generate replies. Conversa understands the situation, tracks the other person's position and reactions, and continuously adapts its strategy to help you figure out **what to say, when to say it, and how to respond when they push back.**
 
 ## Architecture
 
